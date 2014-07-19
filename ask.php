@@ -5,9 +5,10 @@ $nickname = "";
 $password = "";
 
 class askFm {
-    public function __construct($nickname, $password){
+    public function __construct($nickname, $password, $cookieFile = "cookies.txt"){
         $this->_nickname = $nickname;
         $this->_password = $password;
+        $this->_cookieFile = $cookieFile;
     }
 
     private function http($url, $urlRef = "http://ask.fm/", $post = false, $postData = array()){
@@ -23,8 +24,8 @@ class askFm {
             CURLOPT_FOLLOWLOCATION => TRUE,  
             CURLOPT_USERAGENT => $userAgent,  
             CURLOPT_HEADER => FALSE,  
-            CURLOPT_COOKIEJAR => $cookieFile,  
-            CURLOPT_COOKIEFILE => $cookieFile,  
+            CURLOPT_COOKIEJAR => $this->_cookieFile,  
+            CURLOPT_COOKIEFILE => $this->_cookieFile,  
             CURLOPT_SSL_VERIFYPEER => FALSE,  
             CURLOPT_SSL_VERIFYHOST => 2
         );  
@@ -75,6 +76,7 @@ class askFm {
         $data = array('commit' => '');
 
         $this->http("http://ask.fm/logout", "http://ask.fm/account/wall", true, $data);
+        unlink($this->_cookieFile);
     }
 
     public function fetchQuestions(){
