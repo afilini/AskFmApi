@@ -1,8 +1,6 @@
 <?PHP
 require("simple_html_dom.php");
-
-$nickname = "";
-$password = "";
+require("config.php");
 
 class askFm {
     public function __construct($nickname, $password, $cookieFile = "cookies.txt"){
@@ -102,6 +100,6 @@ class askFm {
 }
 
 $ask = new askFm($nickname, $password);
-$ask->login();
+$ask->login(); //Login is optional, you can always ask anonymous questions without logging in
 print_r($ask->fetchQuestions());
 ?>
