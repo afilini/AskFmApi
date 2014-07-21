@@ -97,9 +97,27 @@ class askFm {
 
         return $questions;
     }
+
+    public function reply($questionId, $text){
+
+        $token = $this->get_token();
+
+        $data = array(
+            'question[answer_text]' => $text,
+            'commit' => 'Answer',
+            'question[submit_stream]' => 1,
+            '_method' => 'put',
+            'authenticity_token' => $token,
+            'question[submit_twitter]' => 0,
+            'question[submit_facebook]' => 0
+            );
+
+        $this->http("http://ask.fm/questions/$questionId/answer", "http://ask.fm/".$this->_nickname."/questions/$questionId/reply", true, $data);
+    }
 }
 
 $ask = new askFm($nickname, $password);
 $ask->login(); //Login is optional, you can always ask anonymous questions without logging in
 print_r($ask->fetchQuestions());
+$ask->logout();
 ?>
