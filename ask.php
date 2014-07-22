@@ -7,6 +7,8 @@ class askFm {
         $this->_nickname = $nickname;
         $this->_password = $password;
         $this->_cookieFile = $cookieFile;
+        $this->_loggedIn = false;
+        $this->lastError = NULL;
     }
 
     private function http($url, $urlRef = "http://ask.fm/", $post = false, $postData = array()){
@@ -52,7 +54,7 @@ class askFm {
             'question[question_text]' => $question
         );
 
-        if($anon)
+        if($anon && $this->_loggedIn)
             $data['question[force_anonymous]'] = 1;
 
         $this->http("http://ask.fm/$nickname/questions/create/", "http://ask.fm/$nickname/", true, $data);
@@ -67,57 +69,93 @@ class askFm {
             'password' => $this->_password
         );
 
-        $this->http("http://ask.fm/session", "http://ask.fm/", true, $data);
+        $return = $this->http("http://ask.fm/session", "http://ask.fm/", true, $data);
+        $this->_loggedIn = strpos($return, '<div class="incorrectLogin"') === false;
+        if(!$this->_loggedIn)
+            $this->lastError = "Incorrect username or password";
+        return $this->_loggedIn;
     }
 
     public function logout(){
-        $data = array('commit' => '');
-
-        $this->http("http://ask.fm/logout", "http://ask.fm/account/wall", true, $data);
+        if($this->_loggedIn){
+            $data = array('commit' => '');
+            $this->http("http://ask.fm/logout", "http://ask.fm/account/wall", true, $data);
+        }
+        $this->_loggedIn = false;
         unlink($this->_cookieFile);
     }
 
     public function fetchQuestions(){
-        $questions = array();
-        $pagina = $this->http("http://ask.fm/account/questions", "http://ask.fm/account/wall");
-        $html = str_get_html($pagina);
+        if($this->_loggedIn){
+            $questions = array();
+            $pagina = $this->http("http://ask.fm/account/questions", "http://ask.fm/account/wall");
+            $html = str_get_html($pagina);
 
-        foreach ($html->find('div[class=questionBox]') as $value) {
-            $id = str_replace("inbox_question_", "", $value->id);
-            $text = $value->first_child()->first_child()->first_child()->innertext;
-            $author = $value->first_child()->children(1);
-            $authorNick = is_null($author) ? "ANONYMOUS" : str_replace("/", "", $author->first_child()->href);
-            $author = is_null($author) ? "ANONYMOUS" : $author->first_child()->innertext;
-            $questions[$id] = array(
-                'text' => $text,
-                'author_name' => $author,
-                'author_nickname' => $authorNick
-                );
+            foreach ($html->find('div[class=questionBox]') as $value) {
+                $id = str_replace("inbox_question_", "", $value->id);
+                $text = $value->first_child()->first_child()->first_child()->innertext;
+                $author = $value->first_child()->children(1);
+                $authorNick = is_null($author) ? "ANONYMOUS" : str_replace("/", "", $author->first_child()->href);
+                $author = is_null($author) ? "ANONYMOUS" : $author->first_child()->innertext;
+                $questions[$id] = array(
+                    'text' => $text,
+                    'author_name' => $author,
+                    'author_nickname' => $authorNick
+                    );
+            }
+            return $questions;
+        }else{
+            $this->lastError = "Not logged in";
+            return false;
         }
-
-        return $questions;
     }
 
-    public function reply($questionId, $text){
+    public function checkQuestion($questionId){
+        if($this->_loggedIn){
+            return array_key_exists($questionId, $this->fetchQuestions());
+        }else{
+            $this->lastError = "Not logged in";
+            return false;
+        }
+    }
 
-        $token = $this->get_token();
+    public function answer($questionId, $text){
+        if(!$this->_loggedIn){
+            $this->lastError = "Not logged in";
+            return false;
+        }elseif(!$this->checkQuestion($questionId)){
+            $this->lastError = "Question Doesn't Exists";
+            return false;
+        }else{
+            $token = $this->get_token();
 
-        $data = array(
-            'question[answer_text]' => $text,
-            'commit' => 'Answer',
-            'question[submit_stream]' => 1,
-            '_method' => 'put',
-            'authenticity_token' => $token,
-            'question[submit_twitter]' => 0,
-            'question[submit_facebook]' => 0
-            );
+            $data = array(
+                'question[answer_text]' => $text,
+                'commit' => 'Answer',
+                'question[submit_stream]' => 1,
+                '_method' => 'put',
+                'authenticity_token' => $token,
+                'question[submit_twitter]' => 0,
+                'question[submit_facebook]' => 0
+                );
 
-        $this->http("http://ask.fm/questions/$questionId/answer", "http://ask.fm/".$this->_nickname."/questions/$questionId/reply", true, $data);
+            $this->http("http://ask.fm/questions/$questionId/answer", "http://ask.fm/".$this->_nickname."/questions/$questionId/reply", true, $data);
+            return true;
+        }
     }
 }
 
 $ask = new askFm($nickname, $password);
-$ask->login(); //Login is optional, you can always ask anonymous questions without logging in
-print_r($ask->fetchQuestions());
+$ask->login();
+$ask->ask($nickname, 'prova');
+if(!$questions = $ask->fetchQuestions())
+    echo $ask->lastError."\n";
+else
+    print_r($questions);
+foreach ($questions as $key => $value) {
+    echo $ask->checkQuestion($key) ? "Question $key exists\n" : "Question $key doesn't exits\n";
+    $ask->answer($key, $value['text']);
+}
+echo $ask->checkQuestion('15670201') ? "Question 15670201 exists\n" : "Question 15670201 doesn't exits\n";
 $ask->logout();
 ?>
