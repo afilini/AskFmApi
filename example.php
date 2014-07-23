@@ -13,7 +13,10 @@ else
 
 foreach ($questions as $key => $value) {
     echo $ask->checkQuestion($key) ? "Question $key exists\n" : "Question $key doesn't exits\n";
-    $ask->answer($key, 'your default answer');
+    if($value['text'] == 'do not answer this question')
+    	$ask->delete($key);
+    else
+    	$ask->answer($key, 'your default answer');
 }
 
 echo $ask->checkQuestion('15670201') ? "Question 15670201 exists\n" : "Question 15670201 doesn't exits\n";

@@ -142,5 +142,42 @@ class askFm {
             return true;
         }
     }
+
+    public function delete($questionId){
+        if(!$this->_loggedIn){
+            $this->lastError = "Not logged in";
+            return false;
+        }elseif(!$this->checkQuestion($questionId)){
+            $this->lastError = "Question Doesn't Exists";
+            return false;
+        }else{
+            $token = $this->get_token();
+
+            $data = array(
+                '_method' => 'delete',
+                'authenticity_token' => $token,
+                );
+
+            $this->http("http://ask.fm/questions/$questionId/delete", "http://ask.fm/".$this->_nickname."/questions/", true, $data);
+            return true;
+        }
+    }
+
+    public function deleteAll(){
+        if(!$this->_loggedIn){
+            $this->lastError = "Not logged in";
+            return false;
+        }else{
+            $token = $this->get_token();
+
+            $data = array(
+                '_method' => 'delete',
+                'authenticity_token' => $token,
+                );
+
+            $this->http("http://ask.fm/questions/delete", "http://ask.fm/".$this->_nickname."/questions/", true, $data);
+            return true;
+        }
+    }
 }
 ?>
