@@ -1,9 +1,9 @@
 <?PHP
 require("ask.php");
 
-$ask = new askFm('your nickname', 'your password');
+$ask = new askFm();
 
-$ask->login();
+$ask->login('your nickname', 'your password');
 $ask->ask('whoever', 'question text');
 
 if(!$questions = $ask->fetchQuestions())

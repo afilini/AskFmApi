@@ -2,9 +2,9 @@
 require("simple_html_dom.php");
 
 class askFm {
-    public function __construct($nickname = NULL, $password = NULL, $cookieFile = "cookies.txt"){
-        $this->_nickname = $nickname;
-        $this->_password = $password;
+    public function __construct($cookieFile = "cookies.txt"){
+        $this->_nickname = NULL;
+        $this->_password = NULL;
         $this->_cookieFile = $cookieFile;
         $this->_loggedIn = false;
         $this->lastError = NULL;
@@ -59,8 +59,11 @@ class askFm {
         $this->http("http://ask.fm/$nickname/questions/create/", "http://ask.fm/$nickname/", true, $data);
     }
 
-    public function login(){
+    public function login($nickname, $password){
         $token = $this->get_token();
+
+        $this->_nickname = $nickname;
+        $this->_password = $password;
 
         $data = array(
             'authenticity_token' => $token,
