@@ -1,9 +1,8 @@
 <?PHP
 require("simple_html_dom.php");
-require("config.php");
 
 class askFm {
-    public function __construct($nickname, $password, $cookieFile = "cookies.txt"){
+    public function __construct($nickname = NULL, $password = NULL, $cookieFile = "cookies.txt"){
         $this->_nickname = $nickname;
         $this->_password = $password;
         $this->_cookieFile = $cookieFile;
@@ -144,18 +143,4 @@ class askFm {
         }
     }
 }
-
-$ask = new askFm($nickname, $password);
-$ask->login();
-$ask->ask($nickname, 'prova');
-if(!$questions = $ask->fetchQuestions())
-    echo $ask->lastError."\n";
-else
-    print_r($questions);
-foreach ($questions as $key => $value) {
-    echo $ask->checkQuestion($key) ? "Question $key exists\n" : "Question $key doesn't exits\n";
-    $ask->answer($key, $value['text']);
-}
-echo $ask->checkQuestion('15670201') ? "Question 15670201 exists\n" : "Question 15670201 doesn't exits\n";
-$ask->logout();
 ?>
