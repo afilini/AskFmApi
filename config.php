@@ -1,4 +1,4 @@
 <?PHP
-$nickname = "my nickname for login";
-$password = "my password";
+$nickname = "prova12321";
+$password = "password12321";
 ?>
